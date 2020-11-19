@@ -302,8 +302,6 @@ class BGCardViewController: UIViewController, MaskedTextFieldDelegateListener, B
         super.viewWillAppear(animated)
         NotificationCenter.default.addObserver(self, selector: #selector(BGCardViewController.keyboardWillChangeFrame), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(BGCardViewController.keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
-
-        navigationController?.setNavigationBarHidden(false, animated: false)
     }
     override func viewWillDisappear(_ animated: Bool) {
         NotificationCenter.default.removeObserver(self)
@@ -617,11 +615,6 @@ class BGCardViewController: UIViewController, MaskedTextFieldDelegateListener, B
         CVVTF.isHidden = !style.isRequiredCVV
         cardIcon.isHidden = !style.isRequiredCardNumber
         saveSwitchStack.isHidden = !style.isSaveCardCheckBoxVisible
-
-        navigationItem.rightBarButtonItems = style.rightBarButtonItems
-        if style.rightBarButtonItems.count > 0 {
-            navigationController?.setNavigationBarHidden(false, animated: false)
-        }
     }
     func addDoneButtonOnKeyboard(_ textfield: UITextField){
         let doneToolbar: UIToolbar = UIToolbar(frame: CGRect.init(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 40))
