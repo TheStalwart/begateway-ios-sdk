@@ -275,10 +275,12 @@ class BGCardViewController: UIViewController, MaskedTextFieldDelegateListener, B
     private let stubsaveView = UIView()
     
     private let dissmissButton = UIButton()
+    private let imageView = UIImageView()
     private let payButton = UIButton()
-    private let infoLabel = UILabel()
+    private let infoButton = UIButton()
+    private let refundsButton = UIButton()
     private let datePicker = MonthYearPickerView()
-    
+
     private let loadingBack = UIView()
     private let loadingIndicator = UIActivityIndicatorView(style: .whiteLarge)
     
@@ -300,6 +302,8 @@ class BGCardViewController: UIViewController, MaskedTextFieldDelegateListener, B
         super.viewWillAppear(animated)
         NotificationCenter.default.addObserver(self, selector: #selector(BGCardViewController.keyboardWillChangeFrame), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(BGCardViewController.keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
+
+        navigationController?.setNavigationBarHidden(false, animated: false)
     }
     override func viewWillDisappear(_ animated: Bool) {
         NotificationCenter.default.removeObserver(self)
@@ -333,11 +337,8 @@ class BGCardViewController: UIViewController, MaskedTextFieldDelegateListener, B
         payButton.clipsToBounds = true
         payButton.layer.cornerRadius = 10
         
-        infoLabel.textAlignment = .center
-        infoLabel.numberOfLines = 0
-        infoLabel.lineBreakMode = .byWordWrapping
-        
-        infoLabel.text = BGLocalization.begatewaySecureInfo(paymentSettings.securedBy)
+        infoButton.setTitle("\(NSLocalizedString("Merchant details", comment: "")) ⓘ", for: .normal)
+        refundsButton.setTitle(NSLocalizedString("refunds and returns", comment: ""), for: .normal)
         
         if #available(iOS 11.0, *) {
             mainScrollView.insetsLayoutMarginsFromSafeArea = true
@@ -402,9 +403,11 @@ class BGCardViewController: UIViewController, MaskedTextFieldDelegateListener, B
         mainScrollView.translatesAutoresizingMaskIntoConstraints = false
         
         dissmissButton.translatesAutoresizingMaskIntoConstraints = false
+        imageView.translatesAutoresizingMaskIntoConstraints = false
         cardIcon.translatesAutoresizingMaskIntoConstraints = false
         payButton.translatesAutoresizingMaskIntoConstraints = false
-        infoLabel.translatesAutoresizingMaskIntoConstraints = false
+        infoButton.translatesAutoresizingMaskIntoConstraints = false
+        refundsButton.translatesAutoresizingMaskIntoConstraints = false
         saveSwitchStack.translatesAutoresizingMaskIntoConstraints = false
         loadingBack.translatesAutoresizingMaskIntoConstraints = false
         loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
@@ -426,9 +429,11 @@ class BGCardViewController: UIViewController, MaskedTextFieldDelegateListener, B
         saveSwitchStack.addArrangedSubview(stubsaveView)
         
         view.addSubview(dissmissButton)
+        view.addSubview(imageView)
         mainStack.addArrangedSubview(saveSwitchStack)
         mainStack.addArrangedSubview(payButton)
-        mainStack.addArrangedSubview(infoLabel)
+        mainStack.addArrangedSubview(infoButton)
+        mainStack.addArrangedSubview(refundsButton)
         view.addSubview(loadingBack)
         view.addSubview(loadingIndicator)
     }
@@ -448,14 +453,23 @@ class BGCardViewController: UIViewController, MaskedTextFieldDelegateListener, B
             mainScrollView.rightAnchor.constraint(equalTo: view.rightAnchor)
             ])
         var dismissButtonTopConstraint = dissmissButton.topAnchor.constraint(equalTo: view.topAnchor)
+        var imageViewTopConstraint = imageView.topAnchor.constraint(equalTo: view.topAnchor)
         if #available(iOS 11.0, *) {
             dismissButtonTopConstraint = dissmissButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor)
+            imageViewTopConstraint = imageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor)
         }
         NSLayoutConstraint.activate([
             dismissButtonTopConstraint,
             dissmissButton.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 16),
             dissmissButton.heightAnchor.constraint(equalToConstant: 40),
             dissmissButton.rightAnchor.constraint(lessThanOrEqualTo: view.rightAnchor, constant: -20)
+            ])
+
+        NSLayoutConstraint.activate([
+            imageViewTopConstraint,
+            imageView.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -16),
+            imageView.heightAnchor.constraint(equalToConstant: 40),
+            imageView.widthAnchor.constraint(equalToConstant: 180),
             ])
         
         NSLayoutConstraint.activate([
@@ -513,6 +527,8 @@ class BGCardViewController: UIViewController, MaskedTextFieldDelegateListener, B
     private func makeActions() {
         dissmissButton.addTarget(self, action: #selector(BGCardViewController.dismissTouch), for: .touchUpInside)
         payButton.addTarget(self, action: #selector(BGCardViewController.payTouch), for: .touchUpInside)
+        infoButton.addTarget(self, action: #selector(BGCardViewController.infoTouch), for: .touchUpInside)
+        refundsButton.addTarget(self, action: #selector(BGCardViewController.refundsTouch), for: .touchUpInside)
     }
     @objc private func dismissTouch() {
         delegate?.dismissTouch()
@@ -556,6 +572,14 @@ class BGCardViewController: UIViewController, MaskedTextFieldDelegateListener, B
         }
         delegate?.payTouch(card: card)
     }
+    @objc private func infoTouch() {
+        let alertController = UIAlertController(title: nil, message: NSLocalizedString("merchant_info", comment: ""), preferredStyle: .alert)
+        alertController.addAction(UIAlertAction(title: BGLocalization.close, style: .cancel, handler: nil))
+        present(alertController, animated: true, completion: nil)
+    }
+    @objc private func refundsTouch() {
+        UIApplication.shared.open(URL(string: "https://www.vialet.eu/terms-and-conditions")!, options: [:], completionHandler: nil)
+    }
     private func updateWithColorSettings() {
         cardHolderTF.textColor = colors.holderNameTextColor
         cardHolderTF.backgroundColor = colors.holderNameBackgroundColor
@@ -570,11 +594,17 @@ class BGCardViewController: UIViewController, MaskedTextFieldDelegateListener, B
         expirationDateTF.backgroundColor = colors.expirationDateBackgroundColor
         
         dissmissButton.setTitleColor(colors.cancelTextColor, for: .normal)
+
+        imageView.image = paymentSettings.image
+        imageView.contentMode = .scaleAspectFit
         
         payButton.setTitleColor(colors.payButtonTextColor, for: .normal)
         payButton.backgroundColor = colors.payButtonBackgroundColor
         
-        infoLabel.textColor = colors.secureInfoTextColor
+        infoButton.setTitleColor(colors.secureInfoTextColor, for: .normal)
+
+        refundsButton.setTitleColor(colors.secureInfoTextColor, for: .normal)
+        refundsButton.titleLabel?.font = UIFont.systemFont(ofSize: 12)
         
         saveCardLabel.textColor = colors.saveCardSwitchTextColor
         saveCardSwitch.onTintColor = colors.saveCardSwitchTintOnColor
@@ -587,6 +617,11 @@ class BGCardViewController: UIViewController, MaskedTextFieldDelegateListener, B
         CVVTF.isHidden = !style.isRequiredCVV
         cardIcon.isHidden = !style.isRequiredCardNumber
         saveSwitchStack.isHidden = !style.isSaveCardCheckBoxVisible
+
+        navigationItem.rightBarButtonItems = style.rightBarButtonItems
+        if style.rightBarButtonItems.count > 0 {
+            navigationController?.setNavigationBarHidden(false, animated: false)
+        }
     }
     func addDoneButtonOnKeyboard(_ textfield: UITextField){
         let doneToolbar: UIToolbar = UIToolbar(frame: CGRect.init(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 40))

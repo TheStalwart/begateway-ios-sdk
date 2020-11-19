@@ -13,6 +13,7 @@ public struct BGPaymentSettings {
     public var supportedCardTypes: [BGCardType]
     public var styleSettings: BGStyleSettings
     public var cardViewColorsSettings: BGCardViewColorsSettings
+    public var image: UIImage?
     public var returnURL: String
     public var notificationURL: String
     
